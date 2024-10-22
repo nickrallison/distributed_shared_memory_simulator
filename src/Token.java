@@ -1,11 +1,11 @@
 public class Token {
-    private int tokenId;
+    private String tokenId;
 
-    public Token(int tokenId) {
+    public Token(String tokenId) {
         this.tokenId = tokenId;
     }
 
-    public int getTokenId() {
+    public String getTokenId() {
         return tokenId;
     }
 }
