@@ -5,14 +5,17 @@ public class Processor implements Runnable {
     private TokenRingAgent tokenRingAgent;
     private boolean tokenRingActive;
     private boolean multipleTokens;
+    private Verbosity verbosity = Verbosity.HIGH;
+    private double messageDelay;
 
-    public Processor(int id, DSM dsm, int n, TokenRingAgent tokenRingAgent, boolean tokenRingActive, boolean multipleTokens) {
+    public Processor(int id, DSM dsm, int n, TokenRingAgent tokenRingAgent, boolean tokenRingActive, boolean multipleTokens, double messageDelay) {
         this.id = id;
         this.dsm = dsm;
         this.n = n;
         this.tokenRingAgent = tokenRingAgent;
         this.tokenRingActive = tokenRingActive;
         this.multipleTokens = multipleTokens;
+        this.messageDelay = messageDelay;
     }
 
     @Override
@@ -50,11 +53,13 @@ public class Processor implements Runnable {
             dsm.store("flag[" + id + "]", -1);
 
             try {
-                Thread.sleep((long) (Math.random() * 20));
+                Thread.sleep((long) (Math.random() * messageDelay));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (verbosity.isLow()) System.out.println("Processor " + id + " has completed loop " + count);
         }
+        if (verbosity.isLow()) System.out.println("Processor " + id + " has completed all loops");
     }
 
     public void run_single_token(int run_count) {
@@ -91,7 +96,9 @@ public class Processor implements Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (verbosity.isLow()) System.out.println("Processor " + id + " has completed loop " + count);
         }
+        if (verbosity.isLow()) System.out.println("Processor " + id + " has completed all loops");
     }
 
     public void run_multiple_tokens(int run_count) {
@@ -124,7 +131,9 @@ public class Processor implements Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (verbosity.isLow()) System.out.println("Processor " + id + " has completed loop " + count);
         }
+        if (verbosity.isLow()) System.out.println("Processor " + id + " has completed all loops");
     }
 
     public void petersons_n_process_alg(boolean singleToken, boolean multipleTokens) {
@@ -139,14 +148,14 @@ public class Processor implements Runnable {
 
 
             if (singleToken & multipleTokens) {
-                tokenRingAgent.acquireToken(id);
+                tokenRingAgent.acquireToken(k);
             }
             if (singleToken & !multipleTokens) {
                 tokenRingAgent.acquireToken(0);
             }
             dsm.store("turn[" + k + "]", id);
             if (singleToken & multipleTokens) {
-                tokenRingAgent.releaseToken(id);
+                tokenRingAgent.releaseToken(k);
             }
             if (singleToken & !multipleTokens) {
                 tokenRingAgent.releaseToken(0);

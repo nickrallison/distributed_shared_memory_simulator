@@ -17,8 +17,14 @@ public class BroadcastAgent implements Runnable {
         this.dsm = dsm;
     }
 
-    public void broadcast(Message message) {
-        broadcastSystem.broadcast(message, this);
+    public void broadcast(Message message, double messageDelay) {
+        try {
+            // Simulate delay
+            Thread.sleep((long) (Math.random() * messageDelay));
+            broadcastSystem.broadcast(message, this);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void receive(Message message) {
@@ -32,7 +38,7 @@ public class BroadcastAgent implements Runnable {
                 Message message = messageQueue.take();
                 dsm.applyRemoteStore(message.getVariable(), message.getValue());
                 // Simulate delay
-                Thread.sleep((long) (Math.random() * 100));
+//                Thread.sleep((long) (Math.random() * 100));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
