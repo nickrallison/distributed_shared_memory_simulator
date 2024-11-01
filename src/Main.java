@@ -5,6 +5,7 @@ public class Main {
     public static void main(String[] args) {
         int n = 10; // Number of processors
         boolean tokenRingActive = true; // Set to true to activate the token ring
+        boolean multipleTokens = false; // Set to true to allow multiple tokens in the ring
 
         BroadcastSystem broadcastSystem = new BroadcastSystem();
 
@@ -28,17 +29,22 @@ public class Main {
 
             TokenRingAgent tokenRingAgent = null;
             if (tokenRingActive) {
-                tokenRingAgent = new TokenRingAgent(i, tokenRing);
+                tokenRingAgent = new TokenRingAgent(i, tokenRing, n);
                 tokenRing.addAgent(tokenRingAgent);
             }
 
-            Processor processor = new Processor(i, dsm, n, tokenRingAgent, tokenRingActive);
+            Processor processor = new Processor(i, dsm, n, tokenRingAgent, tokenRingActive, multipleTokens);
             new Thread(processor).start();
         }
 
         // If token ring is active, start the ring
-        if (tokenRingActive) {
+        if (tokenRingActive & !multipleTokens) {
             tokenRing.startRing(0); // Start the token ring with the first processor
+        }
+        if (tokenRingActive & multipleTokens) {
+            for (int i = 0; i < n; i++) {
+                tokenRing.startRing(i); // Start the token ring with each processor
+            }
         }
     }
 }

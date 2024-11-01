@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -5,32 +6,36 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TokenRingAgent {
     int id;
     private TokenRing tokenRing;
-    private BlockingQueue<Token> tokenQueue;
+    private ArrayList<BlockingQueue<Token>> tokenQueues;
 
-    public TokenRingAgent(int id, TokenRing tokenRing) {
+    public TokenRingAgent(int id, TokenRing tokenRing, int numAgents) {
         this.id = id;
         this.tokenRing = tokenRing;
-        this.tokenQueue = new LinkedBlockingQueue<>();
+        this.tokenQueues = new ArrayList<>();
+        for (int i = 0; i < numAgents; i++) {
+            tokenQueues.add(new LinkedBlockingQueue<>());
+        }
     }
 
     public void receiveToken(Token token) {
-        tokenQueue.add(token);
+        int tokenId = token.getTokenId();
+        tokenQueues.get(tokenId).add(token);
     }
 
     public void sendToken(Token token) {
         tokenRing.passTokenToNext(this.id, token);
     }
 
-    public void acquireToken() {
+    public void acquireToken(int tokenId) {
         try {
-            Token token = tokenQueue.take();
+            Token token = tokenQueues.get(tokenId).take();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public void releaseToken() {
-        Token token = new Token(0);
+    public void releaseToken(int tokenId) {
+        Token token = new Token(tokenId);
         sendToken(token);
     }
 }
