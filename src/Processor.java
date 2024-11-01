@@ -32,7 +32,7 @@ public class Processor implements Runnable {
     public void run_no_tokens(int run_count) {
         for (int count = 0; count < run_count; count++) {
             // Entry section for Peterson's algorithm
-            petersons_n_process_alg();
+            petersons_n_process_alg(false, false);
 
             // Critical section
             System.out.println("Processor " + id + " is entering the critical section.");
@@ -60,14 +60,14 @@ public class Processor implements Runnable {
     public void run_single_token(int run_count) {
         for (int count = 0; count < run_count; count++) {
             // Entry section for Peterson's algorithm
-            tokenRingAgent.acquireToken(0);
-            dsm.store("flag[" + id + "]", 1);
-            tokenRingAgent.releaseToken(0);
-            tokenRingAgent.acquireToken(0);
-            dsm.store("turn", id);
-            tokenRingAgent.releaseToken(0);
+//            tokenRingAgent.acquireToken(0);
+//            dsm.store("flag[" + id + "]", 1);
+//            tokenRingAgent.releaseToken(0);
+//            tokenRingAgent.acquireToken(0);
+//            dsm.store("turn", id);
+//            tokenRingAgent.releaseToken(0);
 
-            petersons_n_process_alg();
+            petersons_n_process_alg(true, false);
 
             // Critical section
             System.out.println("Processor " + id + " is entering the critical section.");
@@ -97,12 +97,12 @@ public class Processor implements Runnable {
     public void run_multiple_tokens(int run_count) {
         for (int count = 0; count < run_count; count++) {
             // Entry section for Peterson's algorithm
-            dsm.store("flag[" + id + "]", 1);
-            tokenRingAgent.acquireToken(id);
-            dsm.store("turn", id);
-            tokenRingAgent.releaseToken(id);
+//            dsm.store("flag[" + id + "]", 1);
+//            tokenRingAgent.acquireToken(id);
+//            dsm.store("turn", id);
+//            tokenRingAgent.releaseToken(id);
 
-            petersons_n_process_alg();
+            petersons_n_process_alg(true, true);
 
             // Critical section
             System.out.println("Processor " + id + " is entering the critical section.");
@@ -127,24 +127,46 @@ public class Processor implements Runnable {
         }
     }
 
-    public void petersons_n_process_alg() {
-        for (int k = 0; k < n - 1; k++) {
+    public void petersons_n_process_alg(boolean singleToken, boolean multipleTokens) {
+        for (int k = 1; k < n; k++) {
+            if (singleToken & !multipleTokens) {
+                tokenRingAgent.acquireToken(0);
+            }
             dsm.store("flag[" + id + "]", k);
-            dsm.store("turn[" + k + "]", id);
+            if (singleToken & !multipleTokens) {
+                tokenRingAgent.releaseToken(0);
+            }
 
-            boolean canEnter = false;
-            while (!canEnter) {
-                canEnter = true;
+
+            if (singleToken & multipleTokens) {
+                tokenRingAgent.acquireToken(id);
+            }
+            if (singleToken & !multipleTokens) {
+                tokenRingAgent.acquireToken(0);
+            }
+            dsm.store("turn[" + k + "]", id);
+            if (singleToken & multipleTokens) {
+                tokenRingAgent.releaseToken(id);
+            }
+            if (singleToken & !multipleTokens) {
+                tokenRingAgent.releaseToken(0);
+            }
+
+            // Wait until no other process has a higher or equal interest
+            boolean exists;
+            do {
+                exists = false;
                 for (int j = 0; j < n; j++) {
-                    if (j != id && dsm.load("flag[" + j + "]") >= k) {
-                        canEnter = false;
-                        break;
+                    if (j != id) {
+                        int flagJ = dsm.load("flag[" + j + "]");
+                        int turnK = dsm.load("turn[" + k + "]");
+                        if (flagJ >= k && turnK == id) {
+                            exists = true;
+                            break;
+                        }
                     }
                 }
-                if (canEnter && dsm.load("turn[" + k + "]") == id) {
-                    canEnter = false;
-                }
-            }
+            } while (exists);
         }
     }
 }
